@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>VK Messenger</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -14,12 +14,15 @@
             --message-bg: #ffffff;
             --my-message-bg: #e3f2fd;
             --text-color: #222222;
+            --safe-area-top: env(safe-area-inset-top);
+            --safe-area-bottom: env(safe-area-inset-bottom);
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
@@ -27,11 +30,80 @@
             background: var(--bg-color);
             color: var(--text-color);
             height: 100vh;
+            height: calc(var(--vh, 1vh) * 100);
+            padding-top: var(--safe-area-top);
+            padding-bottom: var(--safe-area-bottom);
+            overflow: hidden;
+        }
+
+        /* Мобильная адаптация */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -100%;
+                width: 85%;
+                height: 100%;
+                z-index: 1000;
+                transition: left 0.3s ease;
+            }
+
+            .sidebar.active {
+                left: 0;
+            }
+
+            .main-chat {
+                width: 100%;
+            }
+
+            .menu-toggle {
+                display: block !important;
+            }
+
+            .message {
+                max-width: 85% !important;
+            }
+
+            .call-controls {
+                padding: 20px !important;
+                gap: 15px !important;
+            }
+
+            .control-btn {
+                width: 50px !important;
+                height: 50px !important;
+                font-size: 18px !important;
+            }
+
+            .local-video {
+                width: 100px !important;
+                height: 133px !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .sidebar {
+                width: 90%;
+            }
+
+            .message {
+                max-width: 90% !important;
+                padding: 10px 12px !important;
+            }
+
+            .control-btn {
+                width: 45px !important;
+                height: 45px !important;
+            }
+
+            .local-video {
+                width: 80px !important;
+                height: 106px !important;
+            }
         }
 
         .app-container {
             display: flex;
-            height: 100vh;
+            height: 100%;
         }
 
         /* Sidebar */
@@ -50,6 +122,16 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: relative;
+        }
+
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
         }
 
         .user-info {
@@ -189,6 +271,7 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
+            -webkit-overflow-scrolling: touch;
         }
 
         .message {
@@ -196,6 +279,7 @@
             padding: 12px 16px;
             border-radius: 12px;
             position: relative;
+            word-wrap: break-word;
         }
 
         .message.received {
@@ -222,6 +306,45 @@
             opacity: 0.6;
             text-align: right;
             margin-top: 4px;
+        }
+
+        /* Voice Message */
+        .voice-message {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            background: rgba(0,0,0,0.05);
+            border-radius: 20px;
+            min-width: 120px;
+        }
+
+        .voice-play-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .voice-duration {
+            font-size: 14px;
+            color: #666;
+            flex-shrink: 0;
+        }
+
+        .voice-waveform {
+            flex: 1;
+            height: 20px;
+            background: linear-gradient(90deg, #4a76a8 50%, transparent 50%);
+            background-size: 8px 100%;
+            border-radius: 10px;
         }
 
         /* Input Area */
@@ -257,13 +380,27 @@
             background: rgba(0,0,0,0.05);
         }
 
+        .tool-btn.recording {
+            background: #ff4444;
+            color: white;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
         .message-input {
             flex: 1;
             padding: 12px 16px;
             border: 1px solid #e1e5e9;
             border-radius: 20px;
-            font-size: 14px;
+            font-size: 16px;
             outline: none;
+            min-height: 40px;
+            resize: none;
         }
 
         .send-btn {
@@ -322,6 +459,7 @@
             height: 100%;
             object-fit: cover;
             background: #000;
+            transform: scaleX(-1); /* Mirror for natural feel */
         }
 
         .local-video {
@@ -333,6 +471,7 @@
             border: 2px solid white;
             border-radius: 10px;
             background: #000;
+            transform: scaleX(-1); /* Mirror for natural feel */
         }
 
         .call-controls {
@@ -352,6 +491,7 @@
             justify-content: center;
             cursor: pointer;
             font-size: 20px;
+            transition: all 0.3s;
         }
 
         .end-call {
@@ -369,6 +509,14 @@
             color: white;
         }
 
+        .toggle-audio.muted {
+            background: #ff4444;
+        }
+
+        .toggle-video.off {
+            background: #ff4444;
+        }
+
         .accept-call {
             background: #4caf50;
             color: white;
@@ -382,12 +530,66 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.95);
             z-index: 2000;
             justify-content: center;
             align-items: center;
             flex-direction: column;
             color: white;
+        }
+
+        .caller-avatar {
+            width: 100px;
+            height: 100px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+        }
+
+        /* Voice Recorder */
+        .voice-recorder {
+            display: none;
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            z-index: 1000;
+            align-items: center;
+            gap: 15px;
+            min-width: 250px;
+        }
+
+        .voice-timer {
+            font-size: 18px;
+            font-weight: 600;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .voice-cancel-btn {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        .voice-send-btn {
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
         }
 
         .login-screen {
@@ -410,6 +612,7 @@
             text-align: center;
             width: 90%;
             max-width: 400px;
+            margin: 20px;
         }
 
         .login-input {
@@ -456,6 +659,22 @@
             cursor: pointer;
             font-size: 12px;
         }
+
+        /* Overlay для мобильного меню */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+
+        .sidebar-overlay.active {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -468,11 +687,17 @@
         </div>
     </div>
 
+    <!-- Overlay для мобильного меню -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
     <!-- Main App -->
     <div class="app-container" id="appContainer" style="display: none;">
         <!-- Sidebar -->
-        <div class="sidebar">
+        <div class="sidebar" id="sidebar">
             <div class="sidebar-header">
+                <button class="menu-toggle" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
                 <div class="user-info">
                     <div class="user-avatar">
                         <i class="fas fa-user"></i>
@@ -513,6 +738,9 @@
         <!-- Main Chat -->
         <div class="main-chat">
             <div class="chat-header">
+                <button class="menu-toggle" onclick="toggleSidebar()" style="display: none;">
+                    <i class="fas fa-bars"></i>
+                </button>
                 <div class="chat-user-info">
                     <div class="user-avatar-small" style="background: var(--primary-color);">
                         <i class="fas fa-users"></i>
@@ -535,7 +763,7 @@
 
             <div class="input-area">
                 <div class="input-tools">
-                    <button class="tool-btn" onclick="toggleVoiceRecord()">
+                    <button class="tool-btn" onclick="toggleVoiceRecord()" id="voiceRecordBtn">
                         <i class="fas fa-microphone"></i>
                     </button>
                     <button class="tool-btn" onclick="openFileInput()">
@@ -548,6 +776,17 @@
                 </button>
             </div>
         </div>
+    </div>
+
+    <!-- Voice Recorder -->
+    <div class="voice-recorder" id="voiceRecorder">
+        <div class="voice-timer" id="voiceTimer">0:00</div>
+        <button class="voice-cancel-btn" onclick="cancelVoiceRecord()">
+            <i class="fas fa-times"></i>
+        </button>
+        <button class="voice-send-btn" onclick="sendVoiceMessage()">
+            <i class="fas fa-check"></i>
+        </button>
     </div>
 
     <!-- Call Interface -->
@@ -575,7 +814,7 @@
 
     <!-- Incoming Call -->
     <div class="incoming-call" id="incomingCall">
-        <div class="call-header">
+        <div class="incoming-call-content">
             <div class="caller-avatar">
                 <i class="fas fa-user"></i>
             </div>
@@ -590,6 +829,9 @@
                 </button>
             </div>
         </div>
+        <audio id="ringtone" loop>
+            <source src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==" type="audio/wav">
+        </audio>
     </div>
 
     <!-- Hidden File Input -->
@@ -597,6 +839,15 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
+        // Установка высоты для мобильных устройств
+        function setVH() {
+            let vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+        }
+        setVH();
+        window.addEventListener('resize', setVH);
+        window.addEventListener('orientationchange', setVH);
+
         let socket;
         let currentUsername;
         let localStream;
@@ -604,13 +855,32 @@
         let currentCall = null;
         let isAudioMuted = false;
         let isVideoOff = false;
+        let mediaRecorder;
+        let audioChunks = [];
+        let voiceTimer;
+        let voiceSeconds = 0;
+        let audioContext;
+        let ringtone;
 
+        // Улучшенные ICE серверы
         const servers = {
             iceServers: [
                 { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:stun1.l.google.com:19302' }
-            ]
+                { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:stun2.l.google.com:19302' },
+                { urls: 'stun:stun3.l.google.com:19302' },
+                { urls: 'stun:stun4.l.google.com:19302' }
+            ],
+            iceCandidatePoolSize: 10
         };
+
+        // Мобильное меню
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
 
         function login() {
             const username = document.getElementById('usernameInput').value.trim();
@@ -646,6 +916,10 @@
                 addMessage(message.sender, message.text, false);
             });
 
+            socket.on('new_voice_message', (message) => {
+                addVoiceMessage(message.sender, message.audioBlob, message.duration, false);
+            });
+
             socket.on('user_joined', (username) => {
                 addSystemMessage(`${username} присоединился к чату`);
             });
@@ -654,8 +928,9 @@
                 addSystemMessage(`${username} покинул чат`);
             });
 
-            // Входящие звонки
+            // Входящие звонки с мелодией
             socket.on('incoming_call', (data) => {
+                playRingtone();
                 showIncomingCall(data.from, data.type);
                 currentCall = {
                     from: data.from,
@@ -665,17 +940,30 @@
                 };
             });
 
+            socket.on('call_initiated', (data) => {
+                document.getElementById('callStatus').textContent = `Звонок ${data.to}...`;
+            });
+
             socket.on('call_accepted', (data) => {
+                stopRingtone();
                 startCall(currentCall.type, false);
             });
 
             socket.on('call_rejected', () => {
+                stopRingtone();
                 alert('Звонок отклонен');
                 hideCallInterface();
             });
 
             socket.on('call_ended', () => {
+                stopRingtone();
                 endCall();
+            });
+
+            socket.on('call_failed', (data) => {
+                stopRingtone();
+                alert(`Ошибка: ${data.reason}`);
+                hideCallInterface();
             });
 
             // WebRTC
@@ -690,6 +978,26 @@
             socket.on('webrtc_ice_candidate', async (data) => {
                 await handleIceCandidate(data.candidate);
             });
+        }
+
+        // Мелодия звонка
+        function playRingtone() {
+            try {
+                const ringtone = document.getElementById('ringtone');
+                ringtone.play().catch(e => console.log('Ringtone play failed:', e));
+            } catch (e) {
+                console.log('Ringtone error:', e);
+            }
+        }
+
+        function stopRingtone() {
+            try {
+                const ringtone = document.getElementById('ringtone');
+                ringtone.pause();
+                ringtone.currentTime = 0;
+            } catch (e) {
+                console.log('Ringtone stop error:', e);
+            }
         }
 
         function updateOnlineUsers(users) {
@@ -734,6 +1042,14 @@
             });
 
             showCallInterface(username, type, 'outgoing');
+            
+            // Таймаут 30 секунд
+            setTimeout(() => {
+                if (currentCall && document.getElementById('callInterface').style.display === 'flex') {
+                    alert('Пользователь не отвечает');
+                    endCall();
+                }
+            }, 30000);
         }
 
         function startGroupCall(type) {
@@ -746,6 +1062,7 @@
         }
 
         function acceptCall() {
+            stopRingtone();
             socket.emit('accept_call', {
                 to: currentUsername,
                 from: currentCall.from,
@@ -757,6 +1074,7 @@
         }
 
         function rejectCall() {
+            stopRingtone();
             socket.emit('reject_call', {
                 to: currentUsername,
                 from: currentCall.from
@@ -767,192 +1085,4 @@
 
         async function startCall(type, isGroup = false) {
             try {
-                const callName = isGroup ? 'Групповой звонок' : (currentCall.isIncoming ? currentCall.from : currentCall.to);
-                showCallInterface(callName, type, 'active');
-
-                const constraints = {
-                    audio: true,
-                    video: type === 'video'
-                };
-
-                localStream = await navigator.mediaDevices.getUserMedia(constraints);
-                
-                if (type === 'video') {
-                    document.getElementById('localVideo').srcObject = localStream;
-                }
-
-                await createPeerConnection();
-                localStream.getTracks().forEach(track => {
-                    peerConnection.addTrack(track, localStream);
-                });
-
-                if (!currentCall.isIncoming) {
-                    const offer = await peerConnection.createOffer();
-                    await peerConnection.setLocalDescription(offer);
-
-                    socket.emit('webrtc_offer', {
-                        target: currentCall.fromSocketId,
-                        offer: offer
-                    });
-                }
-
-            } catch (error) {
-                console.error('Ошибка запуска звонка:', error);
-                alert('Не удалось начать звонок');
-                endCall();
-            }
-        }
-
-        async function createPeerConnection() {
-            peerConnection = new RTCPeerConnection(servers);
-
-            peerConnection.onicecandidate = (event) => {
-                if (event.candidate) {
-                    socket.emit('webrtc_ice_candidate', {
-                        target: currentCall.fromSocketId,
-                        candidate: event.candidate
-                    });
-                }
-            };
-
-            peerConnection.ontrack = (event) => {
-                document.getElementById('remoteVideo').srcObject = event.streams[0];
-            };
-        }
-
-        async function handleOffer(offer, fromSocketId) {
-            await createPeerConnection();
-            await peerConnection.setRemoteDescription(offer);
-
-            const answer = await peerConnection.createAnswer();
-            await peerConnection.setLocalDescription(answer);
-
-            socket.emit('webrtc_answer', {
-                target: fromSocketId,
-                answer: answer
-            });
-        }
-
-        async function handleAnswer(answer) {
-            await peerConnection.setRemoteDescription(answer);
-        }
-
-        async function handleIceCandidate(candidate) {
-            await peerConnection.addIceCandidate(candidate);
-        }
-
-        function toggleAudio() {
-            if (localStream) {
-                const audioTrack = localStream.getAudioTracks()[0];
-                if (audioTrack) {
-                    audioTrack.enabled = !audioTrack.enabled;
-                    isAudioMuted = !audioTrack.enabled;
-                    
-                    const btn = document.getElementById('toggleAudio');
-                    btn.innerHTML = isAudioMuted ? '<i class="fas fa-microphone-slash"></i>' : '<i class="fas fa-microphone"></i>';
-                }
-            }
-        }
-
-        function toggleVideo() {
-            if (localStream) {
-                const videoTrack = localStream.getVideoTracks()[0];
-                if (videoTrack) {
-                    videoTrack.enabled = !videoTrack.enabled;
-                    isVideoOff = !videoTrack.enabled;
-                    
-                    const btn = document.getElementById('toggleVideo');
-                    btn.innerHTML = isVideoOff ? '<i class="fas fa-video-slash"></i>' : '<i class="fas fa-video"></i>';
-                }
-            }
-        }
-
-        function showCallInterface(userName, type, direction) {
-            document.getElementById('callerName').textContent = userName;
-            document.getElementById('callStatus').textContent = 
-                direction === 'outgoing' ? 'Звонок...' : 'Идет звонок';
-            document.getElementById('callInterface').style.display = 'flex';
-        }
-
-        function hideCallInterface() {
-            document.getElementById('callInterface').style.display = 'none';
-            document.getElementById('incomingCall').style.display = 'none';
-        }
-
-        function endCall() {
-            if (peerConnection) {
-                peerConnection.close();
-                peerConnection = null;
-            }
-
-            if (localStream) {
-                localStream.getTracks().forEach(track => track.stop());
-                localStream = null;
-            }
-
-            if (currentCall && currentCall.fromSocketId) {
-                socket.emit('end_call', currentCall.fromSocketId);
-            }
-
-            hideCallInterface();
-            currentCall = null;
-        }
-
-        function sendMessage() {
-            const input = document.getElementById('messageInput');
-            const text = input.value.trim();
-            
-            if (!text) return;
-
-            socket.emit('send_message', {
-                sender: currentUsername,
-                text: text
-            });
-
-            addMessage(currentUsername, text, true);
-            input.value = '';
-        }
-
-        function addMessage(sender, text, isOwn) {
-            const container = document.getElementById('messagesContainer');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${isOwn ? 'sent' : 'received'}`;
-            
-            messageDiv.innerHTML = `
-                ${!isOwn ? `<div class="message-sender">${sender}</div>` : ''}
-                <div class="message-text">${text}</div>
-                <div class="message-time">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
-            `;
-
-            container.appendChild(messageDiv);
-            container.scrollTop = container.scrollHeight;
-        }
-
-        function addSystemMessage(text) {
-            const container = document.getElementById('messagesContainer');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'system-message';
-            messageDiv.textContent = text;
-            container.appendChild(messageDiv);
-            container.scrollTop = container.scrollHeight;
-        }
-
-        function toggleVoiceRecord() {
-            alert('Голосовые сообщения скоро будут доступны!');
-        }
-
-        function openFileInput() {
-            alert('Отправка файлов скоро будет доступна!');
-        }
-
-        // Обработчики клавиш
-        document.getElementById('messageInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') sendMessage();
-        });
-
-        document.getElementById('usernameInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') login();
-        });
-    </script>
-</body>
-</html>
+                const callName = isGroup ? 'Групповой звонок
