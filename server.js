@@ -3,6 +3,8 @@ const http = require('http');
 const socketIo = require('socket.io');
 const path = require('path');
 const bcrypt = require('bcryptjs');
+const multer = require('multer');
+const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
@@ -13,10 +15,43 @@ const io = socketIo(server, {
   }
 });
 
+// Создаем папки для файлов
+if (!fs.existsSync('uploads')) {
+  fs.mkdirSync('uploads');
+}
+if (!fs.existsSync('uploads/voices')) {
+  fs.mkdirSync('uploads/voices');
+}
+if (!fs.existsSync('uploads/files')) {
+  fs.mkdirSync('uploads/files');
+}
+
+// Настройка multer для файлов
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    if (file.mimetype.startsWith('audio/')) {
+      cb(null, 'uploads/voices/');
+    } else {
+      cb(null, 'uploads/files/');
+    }
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + '-' + file.originalname);
+  }
+});
+
+const upload = multer({ 
+  storage: storage,
+  limits: { fileSize: 50 * 1024 * 1024 } // 50MB
+});
+
 app.use(express.static(path.join(__dirname)));
 app.use(express.json());
 
-// База данных пользователей
+// Раздача статических файлов
+app.use('/uploads', express.static('uploads'));
+
+// База данных
 const usersDB = new Map();
 const onlineUsers = new Map();
 const messages = [];
@@ -38,6 +73,7 @@ async function createTestUsers() {
       createdAt: new Date()
     });
   }
+  console.log('✅ Тестовые пользователи созданы');
 }
 
 createTestUsers();
@@ -121,6 +157,37 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
+// Загрузка голосовых сообщений
+app.post('/api/upload-voice', upload.single('voice'), (req, res) => {
+  if (!req.file) {
+    return res.json({ success: false, message: 'Файл не загружен' });
+  }
+  
+  res.json({ 
+    success: true, 
+    filename: req.file.filename,
+    originalName: req.file.originalname,
+    path: `/uploads/voices/${req.file.filename}`,
+    size: req.file.size
+  });
+});
+
+// Загрузка файлов
+app.post('/api/upload-file', upload.single('file'), (req, res) => {
+  if (!req.file) {
+    return res.json({ success: false, message: 'Файл не загружен' });
+  }
+  
+  res.json({ 
+    success: true, 
+    filename: req.file.filename,
+    originalName: req.file.originalname,
+    path: `/uploads/files/${req.file.filename}`,
+    size: req.file.size,
+    type: req.file.mimetype
+  });
+});
+
 io.on('connection', (socket) => {
   console.log('✅ Новое подключение:', socket.id);
 
@@ -177,6 +244,36 @@ io.on('connection', (socket) => {
     socket.to(data.target).emit('webrtc_ice_candidate', data);
   });
 
+  // Голосовые сообщения
+  socket.on('send_voice_message', (data) => {
+    const message = {
+      id: Date.now(),
+      sender: data.sender,
+      type: 'voice',
+      voiceUrl: data.voiceUrl,
+      duration: data.duration,
+      timestamp: new Date()
+    };
+    messages.push(message);
+    socket.broadcast.emit('new_voice_message', message);
+  });
+
+  // Файлы
+  socket.on('send_file_message', (data) => {
+    const message = {
+      id: Date.now(),
+      sender: data.sender,
+      type: 'file',
+      fileName: data.fileName,
+      fileUrl: data.fileUrl,
+      fileSize: data.fileSize,
+      fileType: data.fileType,
+      timestamp: new Date()
+    };
+    messages.push(message);
+    socket.broadcast.emit('new_file_message', message);
+  });
+
   // Сообщения
   socket.on('send_message', (data) => {
     const message = {
@@ -184,7 +281,7 @@ io.on('connection', (socket) => {
       sender: data.sender,
       text: data.text,
       timestamp: new Date(),
-      type: data.type || 'text'
+      type: 'text'
     };
     messages.push(message);
     socket.broadcast.emit('new_message', message);
