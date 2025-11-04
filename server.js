@@ -16,32 +16,31 @@ const io = socketIo(server, {
 app.use(express.static(path.join(__dirname)));
 app.use(express.json());
 
-// Простая база данных в памяти (в реальном приложении используйте MongoDB/PostgreSQL)
+// База данных пользователей
 const usersDB = new Map();
 const onlineUsers = new Map();
 const messages = [];
 
-// Предзаполненные пользователи для теста
-usersDB.set('user1', {
-  username: 'user1',
-  password: '$2a$10$8K1p/a0dRTlR0.0A.5ZP.OaQ.5Q.5Q.5Q.5Q.5Q.5Q.5Q.5Q.5Q.5Q', // password: 123456
-  color: '#4a76a8',
-  createdAt: new Date()
-});
+// Создаем тестовых пользователей
+async function createTestUsers() {
+  const testUsers = [
+    { username: 'user1', password: '123456', color: '#4a76a8' },
+    { username: 'user2', password: '123456', color: '#4caf50' },
+    { username: 'admin', password: '123456', color: '#9c27b0' }
+  ];
 
-usersDB.set('user2', {
-  username: 'user2', 
-  password: '$2a$10$8K1p/a0dRTlR0.0A.5ZP.OaQ.5Q.5Q.5Q.5Q.5Q.5Q.5Q.5Q.5Q.5Q', // password: 123456
-  color: '#4caf50',
-  createdAt: new Date()
-});
+  for (const user of testUsers) {
+    const hashedPassword = await bcrypt.hash(user.password, 10);
+    usersDB.set(user.username, {
+      username: user.username,
+      password: hashedPassword,
+      color: user.color,
+      createdAt: new Date()
+    });
+  }
+}
 
-usersDB.set('admin', {
-  username: 'admin',
-  password: '$2a$10$8K1p/a0dRTlR0.0A.5ZP.OaQ.5Q.5Q.5Q.5Q.5Q.5Q.5Q.5Q.5Q.5Q', // password: 123456
-  color: '#9c27b0',
-  createdAt: new Date()
-});
+createTestUsers();
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
@@ -57,11 +56,11 @@ app.post('/api/register', async (req, res) => {
     }
     
     if (username.length < 3) {
-      return res.json({ success: false, message: 'Имя пользователя должно быть не менее 3 символов' });
+      return res.json({ success: false, message: 'Имя должно быть от 3 символов' });
     }
     
     if (password.length < 6) {
-      return res.json({ success: false, message: 'Пароль должен быть не менее 6 символов' });
+      return res.json({ success: false, message: 'Пароль должен быть от 6 символов' });
     }
     
     if (usersDB.has(username)) {
@@ -81,11 +80,10 @@ app.post('/api/register', async (req, res) => {
     
     res.json({ 
       success: true, 
-      message: 'Регистрация успешна! Теперь войдите в систему.' 
+      message: 'Регистрация успешна!' 
     });
     
   } catch (error) {
-    console.error('Registration error:', error);
     res.json({ success: false, message: 'Ошибка регистрации' });
   }
 });
@@ -119,19 +117,8 @@ app.post('/api/login', async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Login error:', error);
     res.json({ success: false, message: 'Ошибка входа' });
   }
-});
-
-// Получение списка пользователей (для админа)
-app.get('/api/users', (req, res) => {
-  const users = Array.from(usersDB.values()).map(user => ({
-    username: user.username,
-    color: user.color,
-    createdAt: user.createdAt
-  }));
-  res.json({ success: true, users });
 });
 
 io.on('connection', (socket) => {
@@ -190,20 +177,6 @@ io.on('connection', (socket) => {
     socket.to(data.target).emit('webrtc_ice_candidate', data);
   });
 
-  // Голосовые сообщения
-  socket.on('voice_message', (data) => {
-    const message = {
-      id: Date.now(),
-      sender: data.sender,
-      type: 'voice',
-      audioBlob: data.audioBlob,
-      duration: data.duration,
-      timestamp: new Date()
-    };
-    messages.push(message);
-    socket.broadcast.emit('new_voice_message', message);
-  });
-
   // Сообщения
   socket.on('send_message', (data) => {
     const message = {
@@ -238,6 +211,4 @@ io.on('connection', (socket) => {
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Сервер запущен на порту ${PORT}`);
-  console.log(`📝 Тестовые пользователи: user1, user2, admin`);
-  console.log(`🔑 Пароль для всех: 123456`);
 });
