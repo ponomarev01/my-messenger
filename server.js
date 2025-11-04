@@ -36,7 +36,7 @@ io.on('connection', (socket) => {
         updateOnlineUsers();
     });
 
-    // Звонки
+    // Звонки с улучшенной обработкой
     socket.on('call_user', (data) => {
         const targetUser = Array.from(users.values()).find(u => u.username === data.to);
         if (targetUser) {
@@ -45,6 +45,10 @@ io.on('connection', (socket) => {
                 fromSocketId: socket.id,
                 type: data.type
             });
+            // Уведомляем caller что вызов отправлен
+            socket.emit('call_initiated', { to: data.to });
+        } else {
+            socket.emit('call_failed', { reason: 'Пользователь не в сети' });
         }
     });
 
@@ -62,15 +66,7 @@ io.on('connection', (socket) => {
         socket.to(targetSocketId).emit('call_ended');
     });
 
-    socket.on('toggle_audio', (targetSocketId) => {
-        socket.to(targetSocketId).emit('audio_toggled');
-    });
-
-    socket.on('toggle_video', (targetSocketId) => {
-        socket.to(targetSocketId).emit('video_toggled');
-    });
-
-    // WebRTC
+    // WebRTC с улучшенной обработкой
     socket.on('webrtc_offer', (data) => {
         socket.to(data.target).emit('webrtc_offer', data);
     });
@@ -81,6 +77,20 @@ io.on('connection', (socket) => {
 
     socket.on('webrtc_ice_candidate', (data) => {
         socket.to(data.target).emit('webrtc_ice_candidate', data);
+    });
+
+    // Голосовые сообщения
+    socket.on('voice_message', (data) => {
+        const message = {
+            id: Date.now(),
+            sender: data.sender,
+            type: 'voice',
+            audioBlob: data.audioBlob,
+            duration: data.duration,
+            timestamp: new Date()
+        };
+        messages.push(message);
+        socket.broadcast.emit('new_voice_message', message);
     });
 
     // Сообщения
