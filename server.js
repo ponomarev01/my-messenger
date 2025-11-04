@@ -25,12 +25,16 @@ if (!fs.existsSync('uploads/voices')) {
 if (!fs.existsSync('uploads/files')) {
   fs.mkdirSync('uploads/files');
 }
+if (!fs.existsSync('uploads/photos')) {
+  fs.mkdirSync('uploads/photos');
+}
 
-// Настройка multer для файлов
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     if (file.mimetype.startsWith('audio/')) {
       cb(null, 'uploads/voices/');
+    } else if (file.mimetype.startsWith('image/')) {
+      cb(null, 'uploads/photos/');
     } else {
       cb(null, 'uploads/files/');
     }
@@ -42,19 +46,17 @@ const storage = multer.diskStorage({
 
 const upload = multer({ 
   storage: storage,
-  limits: { fileSize: 50 * 1024 * 1024 } // 50MB
+  limits: { fileSize: 100 * 1024 * 1024 }
 });
 
 app.use(express.static(path.join(__dirname)));
 app.use(express.json());
-
-// Раздача статических файлов
 app.use('/uploads', express.static('uploads'));
 
-// База данных
 const usersDB = new Map();
 const onlineUsers = new Map();
 const messages = [];
+const calls = new Map();
 
 // Создаем тестовых пользователей
 async function createTestUsers() {
@@ -166,7 +168,6 @@ app.post('/api/upload-voice', upload.single('voice'), (req, res) => {
   res.json({ 
     success: true, 
     filename: req.file.filename,
-    originalName: req.file.originalname,
     path: `/uploads/voices/${req.file.filename}`,
     size: req.file.size
   });
@@ -188,6 +189,20 @@ app.post('/api/upload-file', upload.single('file'), (req, res) => {
   });
 });
 
+// Загрузка фото
+app.post('/api/upload-photo', upload.single('photo'), (req, res) => {
+  if (!req.file) {
+    return res.json({ success: false, message: 'Фото не загружено' });
+  }
+  
+  res.json({ 
+    success: true, 
+    filename: req.file.filename,
+    path: `/uploads/photos/${req.file.filename}`,
+    size: req.file.size
+  });
+});
+
 io.on('connection', (socket) => {
   console.log('✅ Новое подключение:', socket.id);
 
@@ -195,7 +210,8 @@ io.on('connection', (socket) => {
     onlineUsers.set(socket.id, {
       username: userData.username,
       socketId: socket.id,
-      color: userData.color
+      color: userData.color,
+      avatar: userData.avatar
     });
     
     socket.broadcast.emit('user_joined', userData.username);
@@ -206,29 +222,61 @@ io.on('connection', (socket) => {
   socket.on('call_user', (data) => {
     const targetUser = Array.from(onlineUsers.values()).find(u => u.username === data.to);
     if (targetUser) {
+      const callId = 'call_' + Date.now();
+      calls.set(callId, {
+        id: callId,
+        from: data.from,
+        to: data.to,
+        fromSocketId: socket.id,
+        toSocketId: targetUser.socketId,
+        type: data.type,
+        status: 'calling'
+      });
+      
       socket.to(targetUser.socketId).emit('incoming_call', {
         from: data.from,
         fromSocketId: socket.id,
-        type: data.type
+        type: data.type,
+        callId: callId
       });
-      socket.emit('call_initiated', { to: data.to });
+      
+      socket.emit('call_initiated', { 
+        to: data.to,
+        callId: callId 
+      });
     } else {
       socket.emit('call_failed', { reason: 'Пользователь не в сети' });
     }
   });
 
   socket.on('accept_call', (data) => {
-    socket.to(data.fromSocketId).emit('call_accepted', {
-      targetSocketId: socket.id
-    });
+    const call = calls.get(data.callId);
+    if (call) {
+      call.status = 'active';
+      socket.to(call.fromSocketId).emit('call_accepted', {
+        targetSocketId: socket.id,
+        callId: data.callId
+      });
+    }
   });
 
   socket.on('reject_call', (data) => {
-    socket.to(data.fromSocketId).emit('call_rejected');
+    const call = calls.get(data.callId);
+    if (call) {
+      socket.to(call.fromSocketId).emit('call_rejected');
+      calls.delete(data.callId);
+    }
   });
 
-  socket.on('end_call', (targetSocketId) => {
-    socket.to(targetSocketId).emit('call_ended');
+  socket.on('end_call', (data) => {
+    const call = calls.get(data.callId);
+    if (call) {
+      socket.to(call.fromSocketId).emit('call_ended');
+      if (call.toSocketId) {
+        socket.to(call.toSocketId).emit('call_ended');
+      }
+      calls.delete(data.callId);
+    }
   });
 
   // WebRTC
@@ -274,6 +322,19 @@ io.on('connection', (socket) => {
     socket.broadcast.emit('new_file_message', message);
   });
 
+  // Фото
+  socket.on('send_photo_message', (data) => {
+    const message = {
+      id: Date.now(),
+      sender: data.sender,
+      type: 'photo',
+      photoUrl: data.photoUrl,
+      timestamp: new Date()
+    };
+    messages.push(message);
+    socket.broadcast.emit('new_photo_message', message);
+  });
+
   // Сообщения
   socket.on('send_message', (data) => {
     const message = {
@@ -299,7 +360,8 @@ io.on('connection', (socket) => {
   function updateOnlineUsers() {
     const onlineUsersList = Array.from(onlineUsers.values()).map(u => ({
       username: u.username,
-      color: u.color
+      color: u.color,
+      avatar: u.avatar
     }));
     io.emit('users_online', onlineUsersList);
   }
