@@ -978,4 +978,148 @@
                         ${user.username.charAt(0).toUpperCase()}
                     </div>
                     <div style="flex: 1;">
-                        <div style="font-weight: 500;">${user.username
+                        <div style="font-weight: 500;">${user.username}</div>
+                    </div>
+                    <div class="user-status"></div>
+                    <div class="call-buttons-small">
+                        <button class="call-btn-small audio-call-btn" onclick="startCallWithUser('${user.username}', 'audio')">
+                            <i class="fas fa-phone"></i>
+                        </button>
+                        <button class="call-btn-small video-call-btn" onclick="startCallWithUser('${user.username}', 'video')">
+                            <i class="fas fa-video"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(userElement);
+            });
+        }
+
+        function startCallWithUser(username, type) {
+            currentCall = {
+                to: username,
+                type: type,
+                isIncoming: false
+            };
+
+            socket.emit('call_user', {
+                to: username,
+                from: currentUser.username,
+                type: type
+            });
+
+            showCallInterface(username, type, 'outgoing');
+        }
+
+        function startGroupCall(type) {
+            alert(`Групповой ${type === 'audio' ? 'аудио' : 'видео'} звонок запущен!`);
+        }
+
+        function showIncomingCall(callerName, type) {
+            document.getElementById('incomingCallerName').textContent = callerName;
+            document.getElementById('incomingCall').style.display = 'flex';
+        }
+
+        function acceptCall() {
+            socket.emit('accept_call', {
+                to: currentUser.username,
+                from: currentCall.from,
+                fromSocketId: currentCall.fromSocketId
+            });
+
+            document.getElementById('incomingCall').style.display = 'none';
+            startCall(currentCall.type, false);
+        }
+
+        function rejectCall() {
+            socket.emit('reject_call', {
+                to: currentUser.username,
+                from: currentCall.from
+            });
+            document.getElementById('incomingCall').style.display = 'none';
+            currentCall = null;
+        }
+
+        // Остальные функции (звонки, сообщения) остаются без изменений
+        // ... вставьте сюда функции из предыдущей рабочей версии
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+            
+            if (!text) return;
+
+            socket.emit('send_message', {
+                sender: currentUser.username,
+                text: text
+            });
+
+            addMessage(currentUser.username, text, true);
+            input.value = '';
+        }
+
+        function addMessage(sender, text, isOwn) {
+            const container = document.getElementById('messagesContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isOwn ? 'sent' : 'received'}`;
+            
+            messageDiv.innerHTML = `
+                ${!isOwn ? `<div class="message-sender">${sender}</div>` : ''}
+                <div class="message-text">${text}</div>
+                <div class="message-time">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+            `;
+
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function addSystemMessage(text) {
+            const container = document.getElementById('messagesContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'system-message';
+            messageDiv.textContent = text;
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function toggleVoiceRecord() {
+            alert('Голосовые сообщения скоро будут доступны!');
+        }
+
+        function openFileInput() {
+            alert('Отправка файлов скоро будет доступна!');
+        }
+
+        // Обработчики Enter для форм
+        document.getElementById('loginUsername').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') login();
+        });
+
+        document.getElementById('loginPassword').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') login();
+        });
+
+        document.getElementById('registerUsername').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') register();
+        });
+
+        document.getElementById('registerPassword').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') register();
+        });
+
+        document.getElementById('registerConfirmPassword').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') register();
+        });
+
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') sendMessage();
+        });
+    </script>
+</body>
+</html>
