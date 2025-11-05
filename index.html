@@ -6,79 +6,560 @@
     <title>VK Messenger</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Все стили из предыдущей версии остаются */
-        /* Добавляем стили для голосовых сообщений и файлов */
-        
-        .voice-message {
+        :root {
+            --primary: #4a76a8;
+            --primary-dark: #3d6594;
+            --secondary: #5e81a8;
+            --background: #edf2f6;
+            --surface: #ffffff;
+            --surface-dark: #f5f7fa;
+            --text-primary: #222222;
+            --text-secondary: #656565;
+            --text-muted: #999999;
+            --border: #e7e8ec;
+            --online: #4bb34b;
+            --error: #e64646;
+            --success: #4bb34b;
+            --warning: #ffa000;
+            --safe-area-top: env(safe-area-inset-top);
+            --safe-area-bottom: env(safe-area-inset-bottom);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--background);
+            color: var(--text-primary);
+            height: 100vh;
+            height: calc(var(--vh, 1vh) * 100);
+            padding-top: var(--safe-area-top);
+            padding-bottom: var(--safe-area-bottom);
+            overflow: hidden;
+            line-height: 1.4;
+        }
+
+        /* VK Auth Styles */
+        .vk-auth {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--primary);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            padding: 20px;
+        }
+
+        .vk-auth-container {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 40px 32px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .vk-logo {
+            font-size: 48px;
+            color: var(--primary);
+            margin-bottom: 24px;
+        }
+
+        .vk-auth-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .vk-auth-subtitle {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+        }
+
+        .vk-tabs {
+            display: flex;
+            background: var(--surface-dark);
+            border-radius: 10px;
+            padding: 4px;
+            margin-bottom: 24px;
+        }
+
+        .vk-tab {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            background: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+
+        .vk-tab.active {
+            background: var(--surface);
+            color: var(--primary);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .vk-form {
+            display: none;
+        }
+
+        .vk-form.active {
+            display: block;
+        }
+
+        .vk-input {
+            width: 100%;
+            padding: 16px;
+            margin-bottom: 16px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 16px;
+            background: var(--surface);
+            transition: border-color 0.2s;
+        }
+
+        .vk-input:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+
+        .vk-button {
+            width: 100%;
+            padding: 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-bottom: 16px;
+        }
+
+        .vk-button:hover {
+            background: var(--primary-dark);
+        }
+
+        .vk-button:disabled {
+            background: var(--text-muted);
+            cursor: not-allowed;
+        }
+
+        .vk-button-secondary {
+            background: var(--surface-dark);
+            color: var(--text-primary);
+        }
+
+        .vk-button-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .vk-message {
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-top: 16px;
+        }
+
+        .vk-message.success {
+            background: #e7f5e9;
+            color: var(--success);
+            border: 1px solid #c8e6c9;
+        }
+
+        .vk-message.error {
+            background: #ffebee;
+            color: var(--error);
+            border: 1px solid #ffcdd2;
+        }
+
+        /* VK Main App */
+        .vk-app {
+            display: none;
+            height: 100%;
+            background: var(--surface);
+        }
+
+        /* VK Header */
+        .vk-header {
+            background: var(--primary);
+            color: white;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            height: 56px;
+        }
+
+        .vk-header-left {
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 10px 15px;
-            background: rgba(74, 118, 168, 0.1);
-            border-radius: 20px;
-            min-width: 120px;
-            max-width: 200px;
         }
 
-        .voice-play-btn {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: var(--primary-color);
-            color: white;
+        .vk-header-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .vk-header-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .vk-icon-button {
+            width: 40px;
+            height: 40px;
             border: none;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .vk-icon-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* VK Sidebar */
+        .vk-sidebar {
+            position: fixed;
+            top: 56px;
+            left: -280px;
+            width: 280px;
+            height: calc(100% - 56px);
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            transition: left 0.3s ease;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .vk-sidebar.active {
+            left: 0;
+        }
+
+        .vk-user-card {
+            padding: 20px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .vk-user-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .vk-user-info {
+            flex: 1;
+        }
+
+        .vk-user-name {
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .vk-user-status {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .vk-menu {
+            padding: 8px 0;
+        }
+
+        .vk-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
             cursor: pointer;
-            flex-shrink: 0;
+            transition: background 0.2s;
+            color: var(--text-primary);
+            text-decoration: none;
         }
 
-        .voice-duration {
+        .vk-menu-item:hover {
+            background: var(--surface-dark);
+        }
+
+        .vk-menu-item.active {
+            background: var(--surface-dark);
+            color: var(--primary);
+        }
+
+        .vk-menu-icon {
+            width: 24px;
+            text-align: center;
+            font-size: 18px;
+        }
+
+        .vk-online-users {
+            padding: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .vk-online-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .vk-user-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 0;
+            cursor: pointer;
+        }
+
+        .vk-user-avatar-small {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
             font-size: 14px;
-            color: #666;
-            flex-shrink: 0;
+            font-weight: 600;
+            position: relative;
         }
 
-        .voice-waveform {
+        .vk-user-status-dot {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--online);
+            border: 2px solid var(--surface);
+        }
+
+        .vk-user-call-buttons {
+            display: flex;
+            gap: 4px;
+            margin-left: auto;
+        }
+
+        .vk-call-button-small {
+            width: 28px;
+            height: 28px;
+            border: none;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .vk-call-button-small.video {
+            background: var(--success);
+        }
+
+        /* VK Chat */
+        .vk-chat {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .vk-chat-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--surface);
+        }
+
+        .vk-chat-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .vk-chat-title {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .vk-chat-subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .vk-chat-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .vk-chat-messages {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            background: var(--background);
+        }
+
+        .vk-message-item {
+            margin-bottom: 16px;
+            max-width: 70%;
+        }
+
+        .vk-message-item.own {
+            margin-left: auto;
+        }
+
+        .vk-message-bubble {
+            background: var(--surface);
+            padding: 12px 16px;
+            border-radius: 18px;
+            position: relative;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .vk-message-item.own .vk-message-bubble {
+            background: var(--primary);
+            color: white;
+        }
+
+        .vk-message-sender {
+            font-weight: 600;
+            margin-bottom: 4px;
+            font-size: 14px;
+            color: var(--primary);
+        }
+
+        .vk-message-item.own .vk-message-sender {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .vk-message-text {
+            margin-bottom: 4px;
+            word-wrap: break-word;
+        }
+
+        .vk-message-time {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-align: right;
+        }
+
+        .vk-message-item.own .vk-message-time {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* Voice Messages */
+        .vk-voice-message {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            background: rgba(74, 118, 168, 0.1);
+            border-radius: 20px;
+            min-width: 120px;
+        }
+
+        .vk-voice-play {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .vk-voice-duration {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .vk-voice-wave {
             flex: 1;
             height: 20px;
-            background: linear-gradient(90deg, var(--primary-color) 50%, transparent 50%);
+            background: linear-gradient(90deg, var(--primary) 50%, transparent 50%);
             background-size: 4px 100%;
             border-radius: 10px;
             opacity: 0.6;
         }
 
-        .file-message {
+        /* File Messages */
+        .vk-file-message {
             padding: 12px;
             background: rgba(74, 118, 168, 0.1);
-            border-radius: 10px;
+            border-radius: 12px;
             border: 1px solid rgba(74, 118, 168, 0.2);
             max-width: 250px;
         }
 
-        .file-icon {
+        .vk-file-icon {
             font-size: 24px;
-            color: var(--primary-color);
-            margin-bottom: 5px;
-        }
-
-        .file-name {
-            font-weight: 600;
-            margin-bottom: 5px;
-            word-break: break-word;
-        }
-
-        .file-size {
-            font-size: 12px;
-            color: #666;
+            color: var(--primary);
             margin-bottom: 8px;
         }
 
-        .file-download {
-            display: inline-block;
+        .vk-file-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+            word-break: break-word;
+        }
+
+        .vk-file-size {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .vk-file-download {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
             padding: 6px 12px;
-            background: var(--primary-color);
+            background: var(--primary);
             color: white;
             text-decoration: none;
             border-radius: 15px;
@@ -86,45 +567,132 @@
             font-weight: 500;
         }
 
-        .voice-recorder {
+        /* Photo Messages */
+        .vk-photo-message {
+            max-width: 200px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .vk-photo {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* Input Area */
+        .vk-input-area {
+            padding: 16px;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+        }
+
+        .vk-input-tools {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .vk-tool-button {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: var(--surface-dark);
+            border-radius: 50%;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.2s;
+        }
+
+        .vk-tool-button:hover {
+            background: #e0e0e0;
+        }
+
+        .vk-tool-button.recording {
+            background: var(--error);
+            color: white;
+            animation: pulse 1s infinite;
+        }
+
+        .vk-message-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 16px;
+            background: var(--surface);
+            resize: none;
+            max-height: 120px;
+            outline: none;
+        }
+
+        .vk-send-button {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: background 0.2s;
+        }
+
+        .vk-send-button:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Voice Recorder */
+        .vk-voice-recorder {
             display: none;
             position: fixed;
             bottom: 100px;
             left: 50%;
             transform: translateX(-50%);
-            background: white;
+            background: var(--surface);
             padding: 20px;
             border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
             z-index: 1000;
             align-items: center;
-            gap: 15px;
-            min-width: 250px;
+            gap: 16px;
+            min-width: 280px;
         }
 
-        .voice-recorder.recording {
+        .vk-voice-recorder.recording {
             background: #ffebee;
-            border: 2px solid #ff4444;
+            border: 2px solid var(--error);
         }
 
-        .voice-timer {
+        .vk-voice-timer {
             font-size: 18px;
             font-weight: 600;
+            color: var(--error);
             min-width: 50px;
             text-align: center;
-            color: #ff4444;
         }
 
-        .voice-wave {
+        .vk-voice-wave-container {
             display: flex;
             align-items: center;
             gap: 2px;
-            height: 20px;
+            height: 24px;
         }
 
-        .voice-bar {
+        .vk-voice-bar {
             width: 3px;
-            background: var(--primary-color);
+            background: var(--primary);
             border-radius: 2px;
             animation: wave 0.5s ease-in-out infinite alternate;
         }
@@ -134,714 +702,692 @@
             100% { height: 20px; }
         }
 
-        .tool-btn.recording {
-            background: #ff4444;
-            color: white;
-            animation: pulse 1s infinite;
-        }
-
         @keyframes pulse {
             0% { transform: scale(1); }
             50% { transform: scale(1.1); }
             100% { transform: scale(1); }
         }
+
+        /* Call Interface */
+        .vk-call-interface {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #1a1a1a;
+            z-index: 2000;
+            flex-direction: column;
+        }
+
+        .vk-call-header {
+            padding: 48px 24px 24px;
+            text-align: center;
+            color: white;
+        }
+
+        .vk-call-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .vk-call-status {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .vk-call-video-container {
+            flex: 1;
+            position: relative;
+            margin: 20px;
+            border-radius: 16px;
+            overflow: hidden;
+            background: #000;
+        }
+
+        .vk-call-remote-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .vk-call-local-video {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 120px;
+            height: 160px;
+            border: 2px solid white;
+            border-radius: 12px;
+            background: #000;
+        }
+
+        .vk-call-controls {
+            padding: 32px 24px;
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+        }
+
+        .vk-call-button {
+            width: 64px;
+            height: 64px;
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 24px;
+            transition: all 0.2s;
+        }
+
+        .vk-call-button.end {
+            background: var(--error);
+            color: white;
+        }
+
+        .vk-call-button.mute {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .vk-call-button.mute.active {
+            background: var(--error);
+        }
+
+        .vk-call-button.video {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .vk-call-button.video.active {
+            background: var(--error);
+        }
+
+        /* Incoming Call */
+        .vk-incoming-call {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 3000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: white;
+        }
+
+        .vk-caller-avatar {
+            width: 120px;
+            height: 120px;
+            background: var(--primary);
+            border-radius: 50%;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+        }
+
+        .vk-caller-name {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .vk-call-type {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 48px;
+        }
+
+        .vk-call-actions {
+            display: flex;
+            gap: 32px;
+        }
+
+        .vk-call-action-button {
+            width: 80px;
+            height: 80px;
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 32px;
+            transition: transform 0.2s;
+        }
+
+        .vk-call-action-button:active {
+            transform: scale(0.95);
+        }
+
+        .vk-call-accept {
+            background: var(--success);
+            color: white;
+        }
+
+        .vk-call-decline {
+            background: var(--error);
+            color: white;
+        }
+
+        /* Overlay */
+        .vk-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        .vk-overlay.active {
+            display: block;
+        }
+
+        /* Mobile Adaptations */
+        @media (max-width: 768px) {
+            .vk-sidebar {
+                width: 85%;
+                left: -85%;
+            }
+
+            .vk-message-item {
+                max-width: 85%;
+            }
+
+            .vk-call-controls {
+                padding: 
+                                padding: 24px 16px;
+            }
+
+            .vk-call-button {
+                width: 56px;
+                height: 56px;
+                font-size: 20px;
+            }
+
+            .vk-call-local-video {
+                width: 80px;
+                height: 120px;
+            }
+        }
+
+        /* Dark Mode Support */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --background: #1a1a1a;
+                --surface: #222222;
+                --surface-dark: #2a2a2a;
+                --text-primary: #ffffff;
+                --text-secondary: #b0b0b0;
+                --text-muted: #808080;
+                --border: #3a3a3a;
+            }
+        }
     </style>
 </head>
 <body>
-    <!-- Auth Screen -->
-    <div class="login-screen" id="authScreen">
-        <div class="auth-container">
-            <h2 style="margin-bottom: 30px; color: var(--primary-color); text-align: center;">VK Messenger</h2>
+    <!-- VK Auth Screen -->
+    <div class="vk-auth" id="vkAuth">
+        <div class="vk-auth-container">
+            <div class="vk-logo">
+                <i class="fab fa-vk"></i>
+            </div>
+            <h1 class="vk-auth-title">ВКонтакте</h1>
+            <p class="vk-auth-subtitle">Войдите в свой аккаунт</p>
             
-            <div class="auth-tabs">
-                <button class="auth-tab active" onclick="showAuthTab('login')">Вход</button>
-                <button class="auth-tab" onclick="showAuthTab('register')">Регистрация</button>
+            <div class="vk-tabs">
+                <button class="vk-tab active" data-tab="login">Вход</button>
+                <button class="vk-tab" data-tab="register">Регистрация</button>
             </div>
-
-            <!-- Форма входа -->
-            <div class="auth-form active" id="loginForm">
-                <input type="text" class="auth-input" id="loginUsername" placeholder="Имя пользователя" maxlength="20">
-                <input type="password" class="auth-input" id="loginPassword" placeholder="Пароль">
-                <button class="auth-btn" onclick="login()" id="loginBtn">Войти</button>
-                <div id="loginMessage" class="auth-message"></div>
-            </div>
-
-            <!-- Форма регистрации -->
-            <div class="auth-form" id="registerForm">
-                <input type="text" class="auth-input" id="registerUsername" placeholder="Имя пользователя" maxlength="20">
-                <input type="password" class="auth-input" id="registerPassword" placeholder="Пароль">
-                <input type="password" class="auth-input" id="registerConfirmPassword" placeholder="Подтвердите пароль">
-                <button class="auth-btn" onclick="register()" id="registerBtn">Зарегистрироваться</button>
-                <div id="registerMessage" class="auth-message"></div>
+            
+            <form class="vk-form active" id="loginForm">
+                <input type="text" class="vk-input" placeholder="Телефон или email" required>
+                <input type="password" class="vk-input" placeholder="Пароль" required>
+                <button type="submit" class="vk-button">Войти</button>
+                <button type="button" class="vk-button vk-button-secondary" id="demoLogin">
+                    Демо вход
+                </button>
+            </form>
+            
+            <form class="vk-form" id="registerForm">
+                <input type="text" class="vk-input" placeholder="Имя" required>
+                <input type="text" class="vk-input" placeholder="Фамилия" required>
+                <input type="email" class="vk-input" placeholder="Email" required>
+                <input type="password" class="vk-input" placeholder="Пароль" required>
+                <button type="submit" class="vk-button">Зарегистрироваться</button>
+            </form>
+            
+            <div class="vk-message success" id="successMessage" style="display: none;">
+                Успешный вход! Загрузка...
             </div>
         </div>
     </div>
 
-    <!-- Overlay для мобильного меню -->
-    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
-
-    <!-- Main App -->
-    <div class="app-container" id="appContainer">
-        <!-- Sidebar -->
-        <div class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <button class="menu-toggle" onclick="toggleSidebar()">
+    <!-- VK Main App -->
+    <div class="vk-app" id="vkApp">
+        <!-- Header -->
+        <header class="vk-header">
+            <div class="vk-header-left">
+                <button class="vk-icon-button" id="menuButton">
                     <i class="fas fa-bars"></i>
                 </button>
-                <div class="user-info">
-                    <div class="user-avatar">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    <div>
-                        <div id="currentUsername">Пользователь</div>
-                        <div style="font-size: 12px; opacity: 0.8;">онлайн</div>
-                    </div>
-                </div>
-                <button class="call-btn audio-call-btn" onclick="startGroupCall('audio')" title="Групповой аудиозвонок">
-                    <i class="fas fa-phone"></i>
+                <div class="vk-header-title">Мессенджер</div>
+            </div>
+            <div class="vk-header-right">
+                <button class="vk-icon-button">
+                    <i class="fas fa-search"></i>
+                </button>
+                <button class="vk-icon-button">
+                    <i class="fas fa-ellipsis-v"></i>
                 </button>
             </div>
+        </header>
 
-            <div class="sidebar-menu">
-                <div class="menu-item active">
-                    <i class="fas fa-comments"></i>
-                    <span>Общий чат</span>
-                </div>
-                <div class="menu-item">
-                    <i class="fas fa-users"></i>
-                    <span>Группы</span>
-                </div>
-                <div class="menu-item">
-                    <i class="fas fa-cog"></i>
-                    <span>Настройки</span>
+        <!-- Sidebar -->
+        <div class="vk-sidebar" id="sidebar">
+            <div class="vk-user-card">
+                <div class="vk-user-avatar" id="userAvatar">U</div>
+                <div class="vk-user-info">
+                    <div class="vk-user-name" id="userName">Пользователь</div>
+                    <div class="vk-user-status">В сети</div>
                 </div>
             </div>
-
-            <div class="online-users">
-                <h3 style="margin-bottom: 15px; font-size: 14px; color: #666;">Онлайн сейчас</h3>
-                <div id="onlineUsersList">
-                    <!-- Online users will appear here -->
+            
+            <nav class="vk-menu">
+                <a href="#" class="vk-menu-item active">
+                    <div class="vk-menu-icon"><i class="fas fa-comments"></i></div>
+                    <span>Сообщения</span>
+                </a>
+                <a href="#" class="vk-menu-item">
+                    <div class="vk-menu-icon"><i class="fas fa-users"></i></div>
+                    <span>Друзья</span>
+                </a>
+                <a href="#" class="vk-menu-item">
+                    <div class="vk-menu-icon"><i class="fas fa-bell"></i></div>
+                    <span>Уведомления</span>
+                </a>
+                <a href="#" class="vk-menu-item">
+                    <div class="vk-menu-icon"><i class="fas fa-cog"></i></div>
+                    <span>Настройки</span>
+                </a>
+            </nav>
+            
+            <div class="vk-online-users">
+                <div class="vk-online-title">Друзья онлайн</div>
+                <div class="vk-user-item">
+                    <div class="vk-user-avatar-small">
+                        A
+                        <div class="vk-user-status-dot"></div>
+                    </div>
+                    <div class="vk-user-info">
+                        <div class="vk-user-name">Анна</div>
+                    </div>
+                    <div class="vk-user-call-buttons">
+                        <button class="vk-call-button-small">
+                            <i class="fas fa-phone"></i>
+                        </button>
+                        <button class="vk-call-button-small video">
+                            <i class="fas fa-video"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="vk-user-item">
+                    <div class="vk-user-avatar-small">
+                        I
+                        <div class="vk-user-status-dot"></div>
+                    </div>
+                    <div class="vk-user-info">
+                        <div class="vk-user-name">Иван</div>
+                    </div>
+                    <div class="vk-user-call-buttons">
+                        <button class="vk-call-button-small">
+                            <i class="fas fa-phone"></i>
+                        </button>
+                        <button class="vk-call-button-small video">
+                            <i class="fas fa-video"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Main Chat -->
-        <div class="main-chat">
-            <div class="chat-header">
-                <button class="menu-toggle" onclick="toggleSidebar()" style="display: none;">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <div class="chat-user-info">
-                    <div class="user-avatar-small" style="background: var(--primary-color);">
-                        <i class="fas fa-users"></i>
+        <!-- Overlay -->
+        <div class="vk-overlay" id="overlay"></div>
+
+        <!-- Chat Area -->
+        <div class="vk-chat">
+            <div class="vk-chat-header">
+                <div class="vk-chat-info">
+                    <div class="vk-user-avatar-small">
+                        A
+                        <div class="vk-user-status-dot"></div>
                     </div>
                     <div>
-                        <div style="font-weight: 600;">Общий чат</div>
-                        <div style="font-size: 12px; color: #666;" id="onlineCount">0 участников онлайн</div>
+                        <div class="vk-chat-title">Анна</div>
+                        <div class="vk-chat-subtitle">была в сети 5 минут назад</div>
                     </div>
                 </div>
-                <div class="call-buttons">
-                    <button class="call-btn video-call-btn" onclick="startGroupCall('video')" title="Групповой видеозвонок">
+                <div class="vk-chat-actions">
+                    <button class="vk-icon-button">
+                        <i class="fas fa-phone"></i>
+                    </button>
+                    <button class="vk-icon-button">
                         <i class="fas fa-video"></i>
                     </button>
+                    <button class="vk-icon-button">
+                        <i class="fas fa-info-circle"></i>
+                    </button>
                 </div>
             </div>
-
-            <div class="messages-container" id="messagesContainer">
-                <div class="system-message">Добро пожаловать в чат!</div>
+            
+            <div class="vk-chat-messages" id="chatMessages">
+                <!-- Messages will be inserted here -->
             </div>
-
-            <div class="input-area">
-                <div class="input-tools">
-                    <button class="tool-btn" onclick="toggleVoiceRecord()" id="voiceRecordBtn">
-                        <i class="fas fa-microphone"></i>
-                    </button>
-                    <input type="file" id="fileInput" style="display: none;" accept="*/*">
-                    <button class="tool-btn" onclick="document.getElementById('fileInput').click()">
+            
+            <div class="vk-input-area">
+                <div class="vk-input-tools">
+                    <button class="vk-tool-button" id="attachButton">
                         <i class="fas fa-paperclip"></i>
                     </button>
+                    <button class="vk-tool-button" id="voiceButton">
+                        <i class="fas fa-microphone"></i>
+                    </button>
                 </div>
-                <input type="text" class="message-input" id="messageInput" placeholder="Сообщение..." maxlength="1000">
-                <button class="send-btn" onclick="sendMessage()">
+                <textarea class="vk-message-input" placeholder="Сообщение" id="messageInput"></textarea>
+                <button class="vk-send-button" id="sendButton">
                     <i class="fas fa-paper-plane"></i>
                 </button>
             </div>
         </div>
-    </div>
 
-    <!-- Voice Recorder -->
-    <div class="voice-recorder" id="voiceRecorder">
-        <div class="voice-timer" id="voiceTimer">0:00</div>
-        <div class="voice-wave" id="voiceWave">
-            <!-- Волны будут добавляться через JS -->
-        </div>
-        <button class="voice-cancel-btn" onclick="cancelVoiceRecord()">
-            <i class="fas fa-times"></i>
-        </button>
-        <button class="voice-send-btn" onclick="sendVoiceMessage()">
-            <i class="fas fa-check"></i>
-        </button>
-    </div>
-
-    <!-- Call Interface -->
-    <div class="call-interface" id="callInterface">
-        <div class="call-header">
-            <div class="caller-name" id="callerName">Абонент</div>
-            <div class="call-status" id="callStatus">Идет звонок...</div>
-        </div>
-        <div class="video-container">
-            <video id="remoteVideo" autoplay playsinline class="remote-video"></video>
-            <video id="localVideo" autoplay playsinline muted class="local-video"></video>
-        </div>
-        <div class="call-controls">
-            <button class="control-btn toggle-audio" id="toggleAudio" onclick="toggleAudio()">
-                <i class="fas fa-microphone"></i>
-            </button>
-            <button class="control-btn toggle-video" id="toggleVideo" onclick="toggleVideo()">
-                <i class="fas fa-video"></i>
-            </button>
-            <button class="control-btn end-call" onclick="endCall()">
-                <i class="fas fa-phone-slash"></i>
-            </button>
-        </div>
-    </div>
-
-    <!-- Incoming Call -->
-    <div class="incoming-call" id="incomingCall">
-        <div class="incoming-call-content">
-            <div class="caller-avatar">
-                <i class="fas fa-user"></i>
+        <!-- Voice Recorder -->
+        <div class="vk-voice-recorder" id="voiceRecorder">
+            <div class="vk-voice-timer">0:00</div>
+            <div class="vk-voice-wave-container" id="voiceWave">
+                <!-- Voice bars will be generated here -->
             </div>
-            <div class="caller-name" id="incomingCallerName">Абонент</div>
-            <div class="call-status">Входящий вызов</div>
-            <div class="call-controls" style="margin-top: 30px;">
-                <button class="control-btn accept-call" onclick="acceptCall()">
+            <button class="vk-tool-button" id="cancelVoice">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <!-- Call Interface -->
+        <div class="vk-call-interface" id="callInterface">
+            <div class="vk-call-header">
+                <div class="vk-call-title">Анна</div>
+                <div class="vk-call-status">Звонок...</div>
+            </div>
+            <div class="vk-call-video-container">
+                <video class="vk-call-remote-video" id="remoteVideo"></video>
+                <video class="vk-call-local-video" id="localVideo" muted></video>
+            </div>
+            <div class="vk-call-controls">
+                <button class="vk-call-button mute" id="muteButton">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                <button class="vk-call-button video" id="videoButton">
+                    <i class="fas fa-video"></i>
+                </button>
+                <button class="vk-call-button end" id="endCallButton">
                     <i class="fas fa-phone"></i>
                 </button>
-                <button class="control-btn end-call" onclick="rejectCall()">
-                    <i class="fas fa-phone-slash"></i>
+            </div>
+        </div>
+
+        <!-- Incoming Call -->
+        <div class="vk-incoming-call" id="incomingCall">
+            <div class="vk-caller-avatar">A</div>
+            <div class="vk-caller-name">Анна</div>
+            <div class="vk-call-type">Входящий видеозвонок</div>
+            <div class="vk-call-actions">
+                <button class="vk-call-action-button vk-call-decline" id="declineCall">
+                    <i class="fas fa-phone"></i>
+                </button>
+                <button class="vk-call-action-button vk-call-accept" id="acceptCall">
+                    <i class="fas fa-video"></i>
                 </button>
             </div>
         </div>
     </div>
 
-    <script src="/socket.io/socket.io.js"></script>
     <script>
-        // Установка высоты для мобильных устройств
-        function setVH() {
-            let vh = window.innerHeight * 0.01;
+        // DOM Elements
+        const vkAuth = document.getElementById('vkAuth');
+        const vkApp = document.getElementById('vkApp');
+        const menuButton = document.getElementById('menuButton');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        const chatMessages = document.getElementById('chatMessages');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const voiceButton = document.getElementById('voiceButton');
+        const voiceRecorder = document.getElementById('voiceRecorder');
+        const attachButton = document.getElementById('attachButton');
+        const callInterface = document.getElementById('callInterface');
+        const incomingCall = document.getElementById('incomingCall');
+        const demoLogin = document.getElementById('demoLogin');
+
+        // Auth Tabs
+        const tabs = document.querySelectorAll('.vk-tab');
+        const forms = document.querySelectorAll('.vk-form');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const target = tab.dataset.tab;
+                
+                tabs.forEach(t => t.classList.remove('active'));
+                forms.forEach(f => f.classList.remove('active'));
+                
+                tab.classList.add('active');
+                document.getElementById(`${target}Form`).classList.add('active');
+            });
+        });
+
+        // Demo Login
+        demoLogin.addEventListener('click', () => {
+            const successMessage = document.getElementById('successMessage');
+            successMessage.style.display = 'block';
+            successMessage.textContent = 'Демо вход успешен! Загрузка...';
+            
+            setTimeout(() => {
+                vkAuth.style.display = 'none';
+                vkApp.style.display = 'block';
+                initializeApp();
+            }, 1500);
+        });
+
+        // Initialize App
+        function initializeApp() {
+            // Set viewport height for mobile
+            const vh = window.innerHeight * 0.01;
             document.documentElement.style.setProperty('--vh', `${vh}px`);
-        }
-        setVH();
-        window.addEventListener('resize', setVH);
-        window.addEventListener('orientationchange', setVH);
-
-        let socket;
-        let currentUser = null;
-        let mediaRecorder;
-        let audioChunks = [];
-        let voiceTimer;
-        let voiceSeconds = 0;
-        let audioContext;
-        let analyser;
-        let isRecording = false;
-
-        function showAuthTab(tab) {
-            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
             
-            event.target.classList.add('active');
-            document.getElementById(tab + 'Form').classList.add('active');
+            // Generate sample messages
+            generateSampleMessages();
             
-            document.getElementById('loginMessage').textContent = '';
-            document.getElementById('registerMessage').textContent = '';
+            // Initialize event listeners
+            initializeEventListeners();
         }
 
-        async function login() {
-            const username = document.getElementById('loginUsername').value.trim();
-            const password = document.getElementById('loginPassword').value;
-            const loginBtn = document.getElementById('loginBtn');
-            const messageDiv = document.getElementById('loginMessage');
-
-            if (!username || !password) {
-                showMessage(messageDiv, 'Заполните все поля', 'error');
-                return;
-            }
-
-            loginBtn.disabled = true;
-            loginBtn.textContent = 'Вход...';
-
-            try {
-                const response = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ username, password })
-                });
-
-                const result = await response.json();
-                
-                if (result.success) {
-                    currentUser = result.user;
-                    showMessage(messageDiv, result.message, 'success');
-                    
-                    setTimeout(() => {
-                        document.getElementById('authScreen').style.display = 'none';
-                        document.getElementById('appContainer').style.display = 'flex';
-                        initializeChat();
-                    }, 1000);
-                    
-                } else {
-                    showMessage(messageDiv, result.message, 'error');
+        // Initialize Event Listeners
+        function initializeEventListeners() {
+            // Sidebar toggle
+            menuButton.addEventListener('click', toggleSidebar);
+            overlay.addEventListener('click', closeSidebar);
+            
+            // Message sending
+            sendButton.addEventListener('click', sendMessage);
+            messageInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
                 }
-            } catch (error) {
-                console.error('Login error:', error);
-                showMessage(messageDiv, 'Ошибка подключения к серверу', 'error');
-            } finally {
-                loginBtn.disabled = false;
-                loginBtn.textContent = 'Войти';
-            }
-        }
-
-        async function register() {
-            const username = document.getElementById('registerUsername').value.trim();
-            const password = document.getElementById('registerPassword').value;
-            const confirmPassword = document.getElementById('registerConfirmPassword').value;
-            const registerBtn = document.getElementById('registerBtn');
-            const messageDiv = document.getElementById('registerMessage');
-
-            if (!username || !password || !confirmPassword) {
-                showMessage(messageDiv, 'Заполните все поля', 'error');
-                return;
-            }
-
-            if (password !== confirmPassword) {
-                showMessage(messageDiv, 'Пароли не совпадают', 'error');
-                return;
-            }
-
-            registerBtn.disabled = true;
-            registerBtn.textContent = 'Регистрация...';
-
-            try {
-                const response = await fetch('/api/register', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ username, password })
-                });
-
-                const result = await response.json();
-                
-                if (result.success) {
-                    showMessage(messageDiv, result.message, 'success');
-                    document.getElementById('registerUsername').value = '';
-                    document.getElementById('registerPassword').value = '';
-                    document.getElementById('registerConfirmPassword').value = '';
-                    setTimeout(() => showAuthTab('login'), 2000);
-                } else {
-                    showMessage(messageDiv, result.message, 'error');
-                }
-            } catch (error) {
-                console.error('Register error:', error);
-                showMessage(messageDiv, 'Ошибка подключения к серверу', 'error');
-            } finally {
-                registerBtn.disabled = false;
-                registerBtn.textContent = 'Зарегистрироваться';
-            }
-        }
-
-        function showMessage(element, message, type) {
-            element.textContent = message;
-            element.className = 'auth-message ' + type;
-        }
-
-        function initializeChat() {
-            socket = io();
-            socket.emit('user_online', { 
-                username: currentUser.username,
-                color: currentUser.color
             });
-
-            document.getElementById('currentUsername').textContent = currentUser.username;
-            setupSocketListeners();
             
-            // Настройка обработчика файлов
-            document.getElementById('fileInput').addEventListener('change', handleFileSelect);
-        }
-
-        function setupSocketListeners() {
-            socket.on('users_online', (users) => {
-                updateOnlineUsers(users.filter(u => u.username !== currentUser.username));
-                document.getElementById('onlineCount').textContent = 
-                    `${users.length} участников онлайн`;
-            });
-
-            socket.on('new_message', (message) => {
-                addMessage(message.sender, message.text, false);
-            });
-
-            socket.on('new_voice_message', (message) => {
-                addVoiceMessage(message.sender, message.voiceUrl, message.duration, false);
-            });
-
-            socket.on('new_file_message', (message) => {
-                addFileMessage(message.sender, message.fileName, message.fileUrl, message.fileSize, message.fileType, false);
-            });
-
-            socket.on('user_joined', (username) => {
-                addSystemMessage(`${username} присоединился к чату`);
-            });
-
-            socket.on('user_left', (username) => {
-                addSystemMessage(`${username} покинул чат`);
-            });
-
-            // Остальные обработчики...
-        }
-
-        // Реальные голосовые сообщения
-        async function toggleVoiceRecord() {
-            if (isRecording) {
-                stopVoiceRecord();
-            } else {
-                startVoiceRecord();
-            }
-        }
-
-        async function startVoiceRecord() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    audio: {
-                        echoCancellation: true,
-                        noiseSuppression: true,
-                        sampleRate: 44100
-                    } 
-                });
-                
-                mediaRecorder = new MediaRecorder(stream, {
-                    mimeType: 'audio/webm;codecs=opus'
-                });
-                
-                audioChunks = [];
-                mediaRecorder.ondataavailable = (event) => {
-                    audioChunks.push(event.data);
-                };
-
-                mediaRecorder.start(100); // Записываем каждые 100ms
-                isRecording = true;
-                
-                // Визуализация записи
-                document.getElementById('voiceRecordBtn').classList.add('recording');
-                document.getElementById('voiceRecorder').style.display = 'flex';
-                document.getElementById('voiceRecorder').classList.add('recording');
-                
-                // Таймер
-                voiceSeconds = 0;
-                voiceTimer = setInterval(() => {
-                    voiceSeconds++;
-                    const minutes = Math.floor(voiceSeconds / 60);
-                    const seconds = voiceSeconds % 60;
-                    document.getElementById('voiceTimer').textContent = 
-                        `${minutes}:${seconds.toString().padStart(2, '0')}`;
-                }, 1000);
-
-                // Визуализация волн
-                createVoiceWave();
-
-            } catch (error) {
-                console.error('Voice recording error:', error);
-                alert('Не удалось получить доступ к микрофону');
-            }
-        }
-
-        function stopVoiceRecord() {
-            if (mediaRecorder && isRecording) {
-                mediaRecorder.stop();
-                isRecording = false;
-                
-                document.getElementById('voiceRecordBtn').classList.remove('recording');
-                document.getElementById('voiceRecorder').classList.remove('recording');
-                
-                // Останавливаем все треки
-                mediaRecorder.stream.getTracks().forEach(track => track.stop());
-            }
-        }
-
-        function cancelVoiceRecord() {
-            stopVoiceRecord();
-            document.getElementById('voiceRecorder').style.display = 'none';
-            clearInterval(voiceTimer);
-        }
-
-        async function sendVoiceMessage() {
-            if (mediaRecorder && audioChunks.length > 0) {
-                mediaRecorder.onstop = async () => {
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                    
-                    // Создаем FormData для отправки
-                    const formData = new FormData();
-                    formData.append('voice', audioBlob, 'voice-message.webm');
-                    
-                    try {
-                        const response = await fetch('/api/upload-voice', {
-                            method: 'POST',
-                            body: formData
-                        });
-                        
-                        const result = await response.json();
-                        
-                        if (result.success) {
-                            socket.emit('send_voice_message', {
-                                sender: currentUser.username,
-                                voiceUrl: result.path,
-                                duration: voiceSeconds
-                            });
-                            
-                            addVoiceMessage(currentUser.username, result.path, voiceSeconds, true);
-                        }
-                    } catch (error) {
-                        console.error('Voice upload error:', error);
-                        alert('Ошибка отправки голосового сообщения');
-                    }
-                    
-                    document.getElementById('voiceRecorder').style.display = 'none';
-                    clearInterval(voiceTimer);
-                };
-                
-                mediaRecorder.stop();
-            }
-        }
-
-        function createVoiceWave() {
-            const waveContainer = document.getElementById('voiceWave');
-            waveContainer.innerHTML = '';
+            // Voice recording
+            voiceButton.addEventListener('click', startVoiceRecording);
             
-            for (let i = 0; i < 20; i++) {
-                const bar = document.createElement('div');
-                bar.className = 'voice-bar';
-                bar.style.animationDelay = `${i * 0.1}s`;
-                bar.style.height = `${Math.random() * 15 + 5}px`;
-                waveContainer.appendChild(bar);
-            }
-        }
-
-        function addVoiceMessage(sender, voiceUrl, duration, isOwn) {
-            const container = document.getElementById('messagesContainer');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${isOwn ? 'sent' : 'received'}`;
+            // Call buttons
+            document.querySelectorAll('.vk-call-button-small').forEach(button => {
+                button.addEventListener('click', simulateCall);
+            });
             
-            messageDiv.innerHTML = `
-                ${!isOwn ? `<div class="message-sender">${sender}</div>` : ''}
-                <div class="voice-message">
-                    <button class="voice-play-btn" onclick="playVoiceMessage('${voiceUrl}')">
-                        <i class="fas fa-play"></i>
-                    </button>
-                    <div class="voice-duration">${duration}с</div>
-                    <div class="voice-waveform"></div>
-                </div>
-                <div class="message-time">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
-            `;
-
-            container.appendChild(messageDiv);
-            container.scrollTop = container.scrollHeight;
+            // Incoming call handlers
+            document.getElementById('acceptCall').addEventListener('click', acceptCall);
+            document.getElementById('declineCall').addEventListener('click', declineCall);
+            document.getElementById('endCallButton').addEventListener('click', endCall);
         }
 
-        function playVoiceMessage(url) {
-            const audio = new Audio(url);
-            audio.play();
-        }
-
-        // Реальная отправка файлов
-        async function handleFileSelect(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const formData = new FormData();
-            formData.append('file', file);
-
-            try {
-                const response = await fetch('/api/upload-file', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    socket.emit('send_file_message', {
-                        sender: currentUser.username,
-                        fileName: result.originalName,
-                        fileUrl: result.path,
-                        fileSize: result.size,
-                        fileType: result.type
-                    });
-                    
-                    addFileMessage(currentUser.username, result.originalName, result.path, result.size, result.type, true);
-                }
-            } catch (error) {
-                console.error('File upload error:', error);
-                alert('Ошибка отправки файла');
-            }
-            
-            // Очищаем input
-            event.target.value = '';
-        }
-
-        function addFileMessage(sender, fileName, fileUrl, fileSize, fileType, isOwn) {
-            const container = document.getElementById('messagesContainer');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${isOwn ? 'sent' : 'received'}`;
-            
-            const fileIcon = getFileIcon(fileType);
-            const sizeText = formatFileSize(fileSize);
-            
-            messageDiv.innerHTML = `
-                ${!isOwn ? `<div class="message-sender">${sender}</div>` : ''}
-                <div class="file-message">
-                    <div class="file-icon">${fileIcon}</div>
-                    <div class="file-name">${fileName}</div>
-                    <div class="file-size">${sizeText}</div>
-                    <a href="${fileUrl}" class="file-download" download="${fileName}">
-                        <i class="fas fa-download"></i> Скачать
-                    </a>
-                </div>
-                <div class="message-time">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
-            `;
-
-            container.appendChild(messageDiv);
-            container.scrollTop = container.scrollHeight;
-        }
-
-        function getFileIcon(fileType) {
-            if (fileType.startsWith('image/')) return '<i class="fas fa-image"></i>';
-            if (fileType.startsWith('video/')) return '<i class="fas fa-video"></i>';
-            if (fileType.startsWith('audio/')) return '<i class="fas fa-music"></i>';
-            if (fileType.includes('pdf')) return '<i class="fas fa-file-pdf"></i>';
-            if (fileType.includes('word')) return '<i class="fas fa-file-word"></i>';
-            if (fileType.includes('excel')) return '<i class="fas fa-file-excel"></i>';
-            return '<i class="fas fa-file"></i>';
-        }
-
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
-
-        // Остальные функции (звонки, сообщения, меню)...
+        // Sidebar Functions
         function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebarOverlay');
             sidebar.classList.toggle('active');
             overlay.classList.toggle('active');
         }
 
-        function sendMessage() {
-            const input = document.getElementById('messageInput');
-            const text = input.value.trim();
-            
-            if (!text) return;
-
-            socket.emit('send_message', {
-                sender: currentUser.username,
-                text: text
-            });
-
-            addMessage(currentUser.username, text, true);
-            input.value = '';
+        function closeSidebar() {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
         }
 
-        function addMessage(sender, text, isOwn) {
-            const container = document.getElementById('messagesContainer');
+        // Message Functions
+        function sendMessage() {
+            const text = messageInput.value.trim();
+            if (!text) return;
+            
+            addMessage(text, 'own', 'Вы');
+            messageInput.value = '';
+            adjustTextareaHeight();
+            
+            // Simulate reply
+            setTimeout(() => {
+                const replies = [
+                    'Привет! Как дела?',
+                    'Интересное сообщение',
+                    'Я понял тебя',
+                    'Спасибо за информацию!'
+                ];
+                const randomReply = replies[Math.floor(Math.random() * replies.length)];
+                addMessage(randomReply, 'other', 'Анна');
+            }, 1000 + Math.random() * 2000);
+        }
+
+        function addMessage(text, type, sender) {
             const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${isOwn ? 'sent' : 'received'}`;
+            messageDiv.className = `vk-message-item ${type}`;
+            
+            const time = new Date().toLocaleTimeString('ru-RU', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
             
             messageDiv.innerHTML = `
-                ${!isOwn ? `<div class="message-sender">${sender}</div>` : ''}
-                <div class="message-text">${text}</div>
-                <div class="message-time">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                <div class="vk-message-bubble">
+                    ${type === 'other' ? `<div class="vk-message-sender">${sender}</div>` : ''}
+                    <div class="vk-message-text">${text}</div>
+                    <div class="vk-message-time">${time}</div>
+                </div>
             `;
-
-            container.appendChild(messageDiv);
-            container.scrollTop = container.scrollHeight;
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
-        function addSystemMessage(text) {
-            const container = document.getElementById('messagesContainer');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'system-message';
-            messageDiv.textContent = text;
-            container.appendChild(messageDiv);
-            container.scrollTop = container.scrollHeight;
-        }
-
-        // Обработчики Enter
-        document.getElementById('loginUsername').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') login();
-        });
-
-        document.getElementById('loginPassword').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') login();
-        });
-
-        document.getElementById('registerUsername').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') register();
-        });
-
-        document.getElementById('registerPassword').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') register();
-        });
-
-        document.getElementById('registerConfirmPassword').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') register();
-        });
-
-        document.getElementById('messageInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') sendMessage();
-        });
-
-        // Функции звонков (остаются из предыдущей версии)
-        function startCallWithUser(username, type) {
-            // Заглушка для звонков
-            alert(`Звонок пользователю ${username} (${type})`);
-        }
-
-        function startGroupCall(type) {
-            alert(`Групповой ${type === 'audio' ? 'аудио' : 'видео'} звонок запущен!`);
-        }
-
-        function updateOnlineUsers(users) {
-            const container = document.getElementById('onlineUsersList');
-            container.innerHTML = '';
-
-            users.forEach(user => {
-                const userElement = document.createElement('div');
-                userElement.className = 'user-item';
-                userElement.innerHTML = `
-                    <div class="user-avatar-small" style="background: ${user.color}">
-                        ${user.username.charAt(0).toUpperCase()}
-                    </div>
-                    <div style="flex: 1;">
-                        <div style="font-weight: 500;">${user.username}</div>
-                    </div>
-                    <div class="user-status"></div>
-                    <div class="call-buttons-small">
-                        <button class="call-btn-small audio-call-btn" onclick="startCallWithUser('${user.username}', 'audio')">
-                            <i class="fas fa-phone"></i>
-                        </button>
-                        <button class="call-btn-small video-call-btn" onclick="startCallWithUser('${user.username}', 'video')">
-                            <i class="fas fa-video"></i>
-                        </button>
-                    </div>
-                `;
-                container.appendChild(userElement);
+        function generateSampleMessages() {
+            const sampleMessages = [
+                { text: 'Привет! Как твои дела?', type: 'other', sender: 'Анна' },
+                { text: 'Привет! Всё отлично, спасибо! А у тебя как?', type: 'own', sender: 'Вы' },
+                { text: 'Тоже всё хорошо. Хотела спросить про встречу завтра.', type: 'other', sender: 'Анна' },
+                { text: 'Да, конечно! Во сколько удобно встретиться?', type: 'own', sender: 'Вы' }
+            ];
+            
+            sampleMessages.forEach(msg => {
+                addMessage(msg.text, msg.type, msg.sender);
             });
         }
+
+        // Voice Recording Functions
+        function startVoiceRecording() {
+            voiceButton.classList.add('recording');
+            voiceRecorder.style.display = 'flex';
+            voiceRecorder.classList.add('recording');
+            
+            // Generate voice wave bars
+            const voiceWave = document.getElementById('voiceWave');
+            voiceWave.innerHTML = '';
+            for (let i = 0; i < 20; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'vk-voice-bar';
+                bar.style.animationDelay = `${i * 0.1}s`;
+                voiceWave.appendChild(bar);
+            }
+            
+            // Start timer
+            let seconds = 0;
+            const timer = setInterval(() => {
+                seconds++;
+                const minutes = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                document.querySelector('.vk-voice-timer').textContent = 
+                    `${minutes}:${secs.toString().padStart(2, '0')}`;
+            }, 1000);
+            
+            // Cancel recording
+            document.getElementById('cancelVoice').onclick = () => {
+                clearInterval(timer);
+                voiceButton.classList.remove('recording');
+                voiceRecorder.style.display = 'none';
+                voiceRecorder.classList.remove('recording');
+            };
+        }
+
+        // Call Functions
+        function simulateCall() {
+            incomingCall.style.display = 'flex';
+        }
+
+        function acceptCall() {
+            incomingCall.style.display = 'none';
+            callInterface.style.display = 'flex';
+        }
+
+        function declineCall() {
+            incomingCall.style.display = 'none';
+        }
+
+        function endCall() {
+            callInterface.style.display = 'none';
+        }
+
+        // Utility Functions
+        function adjustTextareaHeight() {
+            messageInput.style.height = 'auto';
+            messageInput.style.height = Math.min(messageInput.scrollHeight, 120) + 'px';
+        }
+
+        // Window resize handler
+        window.addEventListener('resize', () => {
+            const vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+        });
+
+        // Prevent zoom on input focus on mobile
+        messageInput.addEventListener('focus', () => {
+            setTimeout(() => {
+                document.body.style.zoom = "100%";
+            }, 100);
+        });
     </script>
 </body>
 </html>
